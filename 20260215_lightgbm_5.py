@@ -30,8 +30,8 @@ def setup_jp_font():
     matplotlib.rcParams["axes.unicode_minus"] = False
 setup_jp_font()
 
-folder_path = Path(r"D:\\滋賀大学\\data")  # 入力（15分CSV）
-out_dir = Path(r"D:\\滋賀大学\\output")    # 出力
+folder_path = Path(r"data")  # 入力（15分CSV）
+out_dir = Path(r"output")    # 出力
 out_dir.mkdir(exist_ok=True)
 
 # 重要設定
@@ -289,12 +289,16 @@ eval_month = args.eval_month
 # 評価期間の開始日と終了日を設定
 first_day = pd.Series(hourly_sum["date"]).min()
 last_day = pd.Series(hourly_sum["date"]).max()
-eval_start = pd.Timestamp(year=eval_year, month=eval_month, day=1)
-eval_end = eval_start + pd.offsets.MonthEnd(1)  # 月末まで
+
+# 最新月を評価月に設定
+eval_year = last_day.year
+eval_month = last_day.month
+eval_start = pd.Timestamp(year=eval_year, month=eval_month, day=1).date()
+eval_end = (pd.Timestamp(year=eval_year, month=eval_month, day=1) + pd.offsets.MonthEnd(1)).date()  # 月末まで
 
 # 訓練データの開始日と終了日を設定
 train_start = first_day
-train_end = (eval_start - pd.Timedelta(days=1)).date()  # 評価の前日まで
+train_end = (pd.Timestamp(year=eval_year, month=eval_month, day=1) - pd.Timedelta(days=1)).date()  # 評価の前日まで
 
 # データのマスクを作成
 train_mask = (hourly_sum["date"] >= train_start) & (hourly_sum["date"] <= train_end)
@@ -305,7 +309,7 @@ train_df = hourly_sum.loc[train_mask].copy()
 eval_df = hourly_sum.loc[eval_mask].copy()
 
 print(f"[Split] Train: {train_start} ～ {train_end} 行数={len(train_df)} / "
-    f"Eval: {eval_start.date()} ～ {eval_end.date()} 行数={len(eval_df)}")
+    f"Eval: {eval_start} ～ {eval_end} 行数={len(eval_df)}")
 
 # import pandas as pd
 
@@ -503,8 +507,8 @@ print(f"[Split] Train: {train_start.date()} ～ {train_end.date()} 行数={len(t
 eval_year = eval_start.year
 eval_month = eval_start.month
 
-print(f"[Split] Train: {train_start.date()} ～ {train_end.date()} / "
-      f"Eval: {eval_start.date()} ～ {eval_end.date()} 行数={len(eval_df)}")
+print(f"[Split] Train: {train_start} ～ {train_end} / "
+    f"Eval: {eval_start} ～ {eval_end} 行数={len(eval_df)}")
 
 # ========== 必須列の確認・欠損除外 ==========
 # ※ 気温は現在値ではなく1時間前を使用する
