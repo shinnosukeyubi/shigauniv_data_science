@@ -465,7 +465,7 @@ hourly_sum['date'] = pd.to_datetime(hourly_sum[['year', 'month', 'day', 'hour']]
 
 # 評価する月の入力
 eval_year = 2025  # 評価する年
-eval_month = 4   # 評価する月 
+eval_month = 10   # 評価する月 
 
 # 評価期間の設定
 eval_start = pd.Timestamp(year=eval_year, month=eval_month, day=1)
