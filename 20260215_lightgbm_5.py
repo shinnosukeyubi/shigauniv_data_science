@@ -13,6 +13,7 @@ from pathlib import Path
 # 出力と入出力設定
 import platform, matplotlib
 import matplotlib.pyplot as plt
+import argparse
 
 def setup_jp_font():
     system = platform.system()
@@ -277,32 +278,34 @@ hourly_sum["ma6"] = hourly_sum["Pe_Tot_load_A"].rolling(6, min_periods=6).mean()
 # print(f"[Split] Train: {train_start} ～ {train_end} 行数={len(train_df)} / "
 #       f"Eval: {eval_start} ～ {eval_end} 行数={len(eval_df)}")
 
-# # 追加: 評価する月の設定
-# eval_year = 2025  # 評価する年
-# eval_month = 10   # 評価する月 (10月)
+parser = argparse.ArgumentParser(description="評価月を指定して実行")
+parser.add_argument('--eval_year', type=int, default=2025, help='評価する年 (例: 2025)')
+parser.add_argument('--eval_month', type=int, default=10, help='評価する月 (例: 10)')
+args = parser.parse_args()
+eval_year = args.eval_year
+eval_month = args.eval_month
 
-# # 変更: データの読み込み後、評価用のデータをフィルタリング
-# first_day = pd.Series(hourly_sum["date"]).min()
-# last_day = pd.Series(hourly_sum["date"]).max()
 
-# # 評価期間の開始日と終了日を設定
-# eval_start = pd.Timestamp(year=eval_year, month=eval_month, day=1)
-# eval_end = eval_start + pd.offsets.MonthEnd(1)  # 月末まで
+# 評価期間の開始日と終了日を設定
+first_day = pd.Series(hourly_sum["date"]).min()
+last_day = pd.Series(hourly_sum["date"]).max()
+eval_start = pd.Timestamp(year=eval_year, month=eval_month, day=1)
+eval_end = eval_start + pd.offsets.MonthEnd(1)  # 月末まで
 
-# # 訓練データの開始日と終了日を設定
-# train_start = first_day
-# train_end = (eval_start - pd.Timedelta(days=1)).date()  # 評価の前日まで
+# 訓練データの開始日と終了日を設定
+train_start = first_day
+train_end = (eval_start - pd.Timedelta(days=1)).date()  # 評価の前日まで
 
-# # データのマスクを作成
-# train_mask = (hourly_sum["date"] >= train_start) & (hourly_sum["date"] <= train_end)
-# eval_mask = (hourly_sum["date"] >= eval_start) & (hourly_sum["date"] < eval_end)
+# データのマスクを作成
+train_mask = (hourly_sum["date"] >= train_start) & (hourly_sum["date"] <= train_end)
+eval_mask = (hourly_sum["date"] >= eval_start) & (hourly_sum["date"] < eval_end)
 
-# # 訓練データと評価データを作成
-# train_df = hourly_sum.loc[train_mask].copy()
-# eval_df = hourly_sum.loc[eval_mask].copy()
+# 訓練データと評価データを作成
+train_df = hourly_sum.loc[train_mask].copy()
+eval_df = hourly_sum.loc[eval_mask].copy()
 
-# print(f"[Split] Train: {train_start} ～ {train_end} 行数={len(train_df)} / "
-#       f"Eval: {eval_start.date()} ～ {eval_end.date()} 行数={len(eval_df)}")
+print(f"[Split] Train: {train_start} ～ {train_end} 行数={len(train_df)} / "
+    f"Eval: {eval_start.date()} ～ {eval_end.date()} 行数={len(eval_df)}")
 
 # import pandas as pd
 
